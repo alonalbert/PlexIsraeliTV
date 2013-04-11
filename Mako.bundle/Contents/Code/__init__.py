@@ -9,7 +9,7 @@ import APVodItem
 import APCategory
 
 VIDEO_PREFIX = "/video/mako"
-NAME = "Mako"
+NAME = "Mako Plugin"
 ART = 'art-default-2.jpg'
 ICON = 'icon-default-2.png'
 
@@ -24,10 +24,10 @@ def Start():
   Plugin.AddViewGroup("List", viewMode="List", mediaType="items")
 
   # Setup the artwork associated with the plugin
-  MediaContainer.art = R(ART)
-  MediaContainer.title1 = NAME
-  MediaContainer.viewGroup = "List"
-  DirectoryItem.thumb = R(ICON)
+  ObjectContainer.art = R(ART)
+  ObjectContainer.title1 = "Mako"
+  ObjectContainer.view_group = "List"
+  DirectoryObject.thumb = R(ICON)
 
   rand1 = int((random.random() * 8999) + 1000)
   rand2 = int((random.random() * 89) + 10)
@@ -43,61 +43,73 @@ def listShows():
                                             jsonAccountDictionary["account"]["broadcasters"])
   Log('Main Category --> %s' % (broadcaster.getRootCategory()))
   categories = loadCategories(broadcaster.getRootCategory())
-  oc = ObjectContainer(title2 = "Mako")
+  oc = ObjectContainer(title2 = "Mako from show list")
 
   for category in categories.getSubCategories():
       oc.add(TVShowObject(
-          key = Callback(listSeasons, categoryId=category.getId(), showName=category.getTitle()),
+          key = Callback(listSeasons, showId=category.getId(), showName=category.getTitle()),
           rating_key = category.getId(),
-          title = "Show : " + category.getTitle(),
+          title = category.getTitle(),
           summary = category.getDescription(),
           thumb = category.getThumbnail()))
   return oc
 
-def listSeasons(categoryId, showName):
-  categories = loadCategories(categoryId)
-  oc = ObjectContainer(title2 = "Show : " + showName)
+@route('/video/mako/listSeasons')
+def listSeasons(showId, showName):
+  categories = loadCategories(showId)
+  oc = ObjectContainer(title2 = unicode(showName))
   seasonNum = 0
   for category in categories.getSubCategories():
     seasonNum += 1
     oc.add(SeasonObject(
-      key = Callback(listEpisodes, categoryId=category.getId(), showName = showName, seasonName=category.getTitle(), seasonNum=seasonNum),
+      key = Callback(listEpisodes, seasonId=category.getId(), showId = showId, showName = showName, seasonName=category.getTitle()),
       rating_key = category.getId(),
       show = showName,
       index = seasonNum,
-      title = "Season : " + category.getTitle(),
+      title = category.getTitle(),
       summary = category.getDescription(),
       thumb = category.getThumbnail()))
   return oc
 
 
-def listEpisodes(categoryId, showName, seasonName, seasonNum):
-  categories = loadCategories(categoryId)
-  oc = ObjectContainer(title2 = "Show : " + showName + " - " + "Season : " + seasonName)
+@route('/video/mako/listEpisodes')
+def listEpisodes(seasonId, showId, showName, seasonName):
+  categories = loadCategories(seasonId)
+  oc = ObjectContainer(title1=unicode(showName),  title2 = unicode(showName + " - " + seasonName))
   episodeNum = 0
   for item in categories.getVodItems():
     episodeNum += 1
     oc.add(EpisodeObject(
-      key = Callback(getEpisode, episodeId=item.getId(), showName = showName, seasonName = seasonName),
+      key = Callback(getEpisode, episodeId=item.getId(), seasonId = seasonId, showId = showId , showName = showName, seasonName = seasonName),
       rating_key = item.getId(),
-      title = "Episode : " + item.getTitle(),
+      title = item.getTitle(),
       show = showName,
       index = episodeNum,
       thumb = item.getThumbnail()))
   return oc
 
 
-def getEpisode(episodeId, showName, seasonName):
+@route('/video/mako/getEpisode')
+def getEpisode(episodeId, seasonId, showId,  showName, seasonName):
   itemLoader = APItemLoader.APItemLoader(PROPERTIES, episodeId)
   Log('ItemURL --> %s' % (itemLoader.getQuery()))
   jsonItemDictionary = itemLoader.loadURL()
   item = APVodItem.APVodItem(jsonItemDictionary["vod_item"])
 
+  thumbnail = item.getThumbnail()
+  Log("Thumbnail: " + thumbnail)
+  if thumbnail is None or thumbnail == "":
+      Log("Thumbnail: " + thumbnail)
+      thumbnail = loadCategory(seasonId).getThumbnail()
+      if thumbnail is None or thumbnail == "":
+          Log("Thumbnail: " + thumbnail)
+          thumbnail = loadCategory(showId).getThumbnail()
+
   episode = EpisodeObject(
       key = Callback(getEpisode, episodeId=episodeId, showName = showName, seasonName = seasonName),
       rating_key = episodeId,
-      title = "Show : " + showName + " - " + "Season : " + seasonName + " - " + "Episode : " + item.getTitle(),
-      thumb = item.getThumbnail(),
+      title = showName + " - " + seasonName + " - " + item.getTitle(),
+      thumb =thumbnail,
       summary = item.getDescription(),
       items = [
           MediaObject(
@@ -116,6 +128,10 @@ def getEpisode(episodeId, showName, seasonName):
 def loadCategories(categoryId):
     categoryLoader = APCategoryLoader.APCategoryLoader(PROPERTIES, categoryId)
     jsonCategoryDictionary = categoryLoader.loadURL()
-    categories = APCategoryList.APCategoryList(jsonCategoryDictionary["category"])
-    return categories
+    return APCategoryList.APCategoryList(jsonCategoryDictionary["category"])
+
+def loadCategory(categoryId):
+    categoryLoader = APCategoryLoader.APCategoryLoader(PROPERTIES, categoryId)
+    jsonCategoryDictionary = categoryLoader.loadURL()
+    return APCategory.APCategory(jsonCategoryDictionary["category"])
 
