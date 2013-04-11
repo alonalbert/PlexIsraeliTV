@@ -25,7 +25,7 @@ def Start():
 
   # Setup the artwork associated with the plugin
   ObjectContainer.art = R(ART)
-  ObjectContainer.title1 = "Mako"
+  ObjectContainer.title1 = NAME
   ObjectContainer.view_group = "List"
   DirectoryObject.thumb = R(ICON)
 
@@ -43,7 +43,7 @@ def listShows():
                                             jsonAccountDictionary["account"]["broadcasters"])
   Log('Main Category --> %s' % (broadcaster.getRootCategory()))
   categories = loadCategories(broadcaster.getRootCategory())
-  oc = ObjectContainer(title2 = "Mako from show list")
+  oc = ObjectContainer(title2 = "Mako")
 
   for category in categories.getSubCategories():
       oc.add(TVShowObject(
@@ -56,8 +56,9 @@ def listShows():
 
 @route('/video/mako/listSeasons')
 def listSeasons(showId, showName):
+  showName = unicode(showName)
   categories = loadCategories(showId)
-  oc = ObjectContainer(title2 = unicode(showName))
+  oc = ObjectContainer(title2 = showName)
   seasonNum = 0
   for category in categories.getSubCategories():
     seasonNum += 1
@@ -74,8 +75,10 @@ def listSeasons(showId, showName):
 
 @route('/video/mako/listEpisodes')
 def listEpisodes(seasonId, showId, showName, seasonName):
+  showName = unicode(showName)
+  seasonName = unicode(seasonName)
   categories = loadCategories(seasonId)
-  oc = ObjectContainer(title1=unicode(showName),  title2 = unicode(showName + " - " + seasonName))
+  oc = ObjectContainer(title1=showName,  title2 = showName + " - " + seasonName)
   episodeNum = 0
   for item in categories.getVodItems():
     episodeNum += 1
@@ -89,8 +92,10 @@ def listEpisodes(seasonId, showId, showName, seasonName):
   return oc
 
 
-@route('/video/mako/getEpisode')
 def getEpisode(episodeId, seasonId, showId,  showName, seasonName):
+  showName = unicode(showName)
+  seasonName = unicode(seasonName)
+
   itemLoader = APItemLoader.APItemLoader(PROPERTIES, episodeId)
   Log('ItemURL --> %s' % (itemLoader.getQuery()))
   jsonItemDictionary = itemLoader.loadURL()
@@ -106,7 +111,7 @@ def getEpisode(episodeId, seasonId, showId,  showName, seasonName):
           thumbnail = loadCategory(showId).getThumbnail()
 
   episode = EpisodeObject(
-      key = Callback(getEpisode, episodeId=episodeId, showName = showName, seasonName = seasonName),
+      key = Callback(getEpisode, episodeId=episodeId, seasonId = seasonId, showId = showId , showName = showName, seasonName = seasonName),
       rating_key = episodeId,
       title = showName + " - " + seasonName + " - " + item.getTitle(),
       thumb =thumbnail,
@@ -116,10 +121,6 @@ def getEpisode(episodeId, seasonId, showId,  showName, seasonName):
               parts = [
                   PartObject(key=item.getStreamUrl())
               ],
-              container = Container.MP4,
-              video_codec = VideoCodec.H264,
-              audio_codec = AudioCodec.AAC,
-              audio_channels = 2,
           )
       ])
 

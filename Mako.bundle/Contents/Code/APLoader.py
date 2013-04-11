@@ -18,7 +18,7 @@ import hashlib, time, urllib, urllib2, json
 class APLoader(object):
     bundleValue = '' # (OSUtil.getPackageName(CustomApplication.getAppContext()) + "android")
     bundleVersionValue = '1.1' # OSUtil.getAppVersion(CustomApplication.getAppContext())
-    osVersionValue = '10' # OSUtil.getAPIVersion()
+    osVersionValue = '17' # OSUtil.getAPIVersion()
     deviceModelValue = 'GT-P1000' # Hey I'm a galaxy tab device
     pKey = '' # privateKey from the properties
     
