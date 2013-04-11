@@ -49,14 +49,14 @@ def listShows():
       oc.add(TVShowObject(
           key = Callback(listSeasons, categoryId=category.getId(), showName=category.getTitle()),
           rating_key = category.getId(),
-          title = category.getTitle(),
+          title = "Show : " + category.getTitle(),
           summary = category.getDescription(),
           thumb = category.getThumbnail()))
   return oc
 
 def listSeasons(categoryId, showName):
   categories = loadCategories(categoryId)
-  oc = ObjectContainer(title2 = showName)
+  oc = ObjectContainer(title2 = "Show : " + showName)
   seasonNum = 0
   for category in categories.getSubCategories():
     seasonNum += 1
@@ -65,7 +65,7 @@ def listSeasons(categoryId, showName):
       rating_key = category.getId(),
       show = showName,
       index = seasonNum,
-      title = category.getTitle(),
+      title = "Season : " + category.getTitle(),
       summary = category.getDescription(),
       thumb = category.getThumbnail()))
   return oc
@@ -73,21 +73,20 @@ def listSeasons(categoryId, showName):
 
 def listEpisodes(categoryId, showName, seasonName, seasonNum):
   categories = loadCategories(categoryId)
-  oc = ObjectContainer(title2 = showName + " - " + seasonName)
+  oc = ObjectContainer(title2 = "Show : " + showName + " - " + "Season : " + seasonName)
   episodeNum = 0
   for item in categories.getVodItems():
     episodeNum += 1
     oc.add(EpisodeObject(
       key = Callback(getEpisode, episodeId=item.getId(), showName = showName, seasonName = seasonName),
       rating_key = item.getId(),
-      title = item.getTitle(),
+      title = "Episode : " + item.getTitle(),
       show = showName,
       index = episodeNum,
       thumb = item.getThumbnail()))
   return oc
 
 
-@route('/video/mako/getEpisode')
 def getEpisode(episodeId, showName, seasonName):
   itemLoader = APItemLoader.APItemLoader(PROPERTIES, episodeId)
   Log('ItemURL --> %s' % (itemLoader.getQuery()))
@@ -97,7 +96,7 @@ def getEpisode(episodeId, showName, seasonName):
   episode = EpisodeObject(
       key = Callback(getEpisode, episodeId=episodeId, showName = showName, seasonName = seasonName),
       rating_key = episodeId,
-      title = showName + " - " + seasonName + " - " + item.getTitle(),
+      title = "Show : " + showName + " - " + "Season : " + seasonName + " - " + "Episode : " + item.getTitle(),
       thumb = item.getThumbnail(),
       summary = item.getDescription(),
       items = [
