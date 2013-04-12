@@ -10,9 +10,10 @@ import APEpgLoader
 import APVodItem
 import APCategory
 
-PROPERTIES = {'pKey': '81d42db7c211bf9615a895c504', 'accountId': '39', 'broadcasterId': '24',
-              'bundle': 'com.keshet.mako.VODandroid'}
-
+PROVIDERS = {
+  "Mako": {'pKey': '81d42db7c211bf9615a895c504', 'accountId': '39', 'broadcasterId': '24',
+           'bundle': 'com.keshet.mako.VODandroid'}
+}
 
 def Log(text):
   print text
@@ -58,7 +59,9 @@ def getItem(itemId):
 rand1 = int((random.random() * 8999) + 1000)
 rand2 = int((random.random() * 89) + 10)
 deviceId = '1d' + str(rand1) + 'd3b4f71c' + str(rand2)
-PROPERTIES['deviceId'] = deviceId
 
-getItem("442181")
+for provider, properties in PROVIDERS.items():
+  properties['deviceId'] = deviceId
+  print provider
+
 
