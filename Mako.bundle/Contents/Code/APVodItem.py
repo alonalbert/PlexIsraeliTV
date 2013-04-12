@@ -26,20 +26,21 @@ class APVodItem(APModel):
     description = ''
     thumbnail = ''
     stream = ''
-    
+
     def __init__(self, params = {}):
         self.innerDictionary = params
-        try:
-            self.free = self.get('free')
-            self.id = str(self.get('id'))
-            self.description = self.get('summary')
-            self.title = self.get('title')
-            imagesJosn = json.loads(self.get("images_json"))
-            self.thumbnail = imagesJosn["large_thumb"]
-            self.stream = self.get('stream_url')
-        except:
-            pass
-        
+        self.free = self.get('free')
+        self.id = str(self.get('id'))
+        self.description = self.get('summary')
+        self.title = self.get('title')
+        self_get = self.get("images_json")
+        self.stream = self.get('stream_url')
+        images = json.loads(self_get)
+        if images is not None:
+            self.thumbnail = images.get("large_thumb")
+            if self.thumbnail is None:
+                self.thumbnail = images.get("large_thumbnail")
+
     def isFree(self):
         return self.free
     

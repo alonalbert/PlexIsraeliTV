@@ -22,20 +22,17 @@ class APCategoryList(APModel):
         self.innerDictionary = params
         self.children = []
         self.vodItems = []
-        try:
-            items = self.innerDictionary['children']
+
+        items = self.innerDictionary.get('children')
+        if items is not None:
             for child in items:
                 self.children.append(APCategory(child))
-        except:
-            pass
-        try:
-            items = self.innerDictionary['vod_items']
-            self.hasVodItems = True
+
+        items = self.innerDictionary.get('vod_items')
+        if items is not None:
             for vod in items:
                 self.vodItems.append(APVodItem(vod))
-        except:
-            pass
-        
+
     def hasSubCategories(self):
         return self.children
     

@@ -1,3 +1,4 @@
+import json
 import random
 import APCategoryLoader
 import APAccountLoader
@@ -14,10 +15,8 @@ ART = 'art-default-2.jpg'
 ICON = 'icon-default-2.png'
 
 PROVIDERS = {
-  "Mako": {'pKey': '81d42db7c211bf9615a895c504', 'accountId': '39', 'broadcasterId': '24',
-           'bundle': 'com.keshet.mako.VODandroid'},
-  "Mako2": {'pKey': '81d42db7c211bf9615a895c504', 'accountId': '39', 'broadcasterId': '24',
-           'bundle': 'com.keshet.mako.VODandroid'}
+  "Mako": {'pKey': '81d42db7c211bf9615a895c504', 'accountId': '39', 'broadcasterId': '24', 'bundle': 'com.keshet.mako.VODandroid'},
+  "Ten": {'pKey':'b52501f01699218ca6f6df33c1', 'accountId': '69', 'broadcasterId':'67', 'bundle':'com.applicaster.il.tenandroid'}
 }
 
 
@@ -59,7 +58,6 @@ def listProviders():
     ))
   return oc
 
-
 @route('/video/mako/listDirectories')
 def listDirectories(provider, categoryId, title):
   title=unicode(title)
@@ -88,11 +86,16 @@ def listDirectories(provider, categoryId, title):
 def getClip(provider, itemId):
   itemLoader = APItemLoader.APItemLoader(PROVIDERS[provider], itemId)
   Log('ItemURL --> %s' % (itemLoader.getQuery()))
-  jsonItemDictionary = itemLoader.loadURL()
-  item = APVodItem.APVodItem(jsonItemDictionary["vod_item"])
+  jsonObject = itemLoader.loadURL()
 
+#  Log(params.dumps(jsonObject, indent=2))
+
+  item = APVodItem.APVodItem(jsonObject["vod_item"])
+
+  streamUrl = item.getStreamUrl()
+  Log("streamUrl: %s" % (streamUrl))
   clip = VideoClipObject(
-    key=Callback(getClip, itemId=itemId),
+    key=Callback(getClip, provider=provider, itemId=itemId),
     rating_key=itemId,
     title=item.getTitle(),
     thumb=item.getThumbnail(),
@@ -100,7 +103,7 @@ def getClip(provider, itemId):
     items=[
       MediaObject(
         parts=[
-          PartObject(key=item.getStreamUrl())
+          PartObject(key=streamUrl)
         ],
       )
     ])
