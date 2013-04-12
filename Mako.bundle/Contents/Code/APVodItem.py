@@ -13,6 +13,7 @@
 
     @author: shai
 '''
+import json
 from APModel import APModel
 
 class APVodItem(APModel):
@@ -33,7 +34,8 @@ class APVodItem(APModel):
             self.id = str(self.get('id'))
             self.description = self.get('summary')
             self.title = self.get('title')
-            self.thumbnail = self.get('large_thumb')
+            imagesJosn = json.loads(self.get("images_json"))
+            self.thumbnail = imagesJosn["large_thumb"]
             self.stream = self.get('stream_url')
         except:
             pass

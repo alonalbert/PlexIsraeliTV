@@ -92,7 +92,6 @@ class APLoader(object):
             response = urllib2.urlopen(req)
             jsonData = response.read()
             response.close()
-            
             datadict = json.loads(jsonData, 'utf-8')
             return datadict
         except:

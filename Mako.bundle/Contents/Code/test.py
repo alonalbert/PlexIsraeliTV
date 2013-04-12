@@ -44,17 +44,21 @@ def getCategory(categoryId):
   jsonCategoryDictionary = categoryLoader.loadURL()
   categories = APCategoryList.APCategoryList(jsonCategoryDictionary["category"])
 
-  if (categories.hasSubCategories()):
-    for category in categories.getSubCategories():
-      Log("Sub: " + category.getTitle())
+  for category in categories.getSubCategories():
+    Log("Sub: %s - %s" % (category.getTitle(), category.getId()))
+  for item in categories.getVodItems():
+    Log("Item: %s - %s" % (item.getTitle(), item.getId()))
 
+def getItem(itemId):
+  itemLoader = APItemLoader.APItemLoader(PROPERTIES, itemId)
+  Log('ItemURL --> %s' % (itemLoader.getQuery()))
+  jsonItemDictionary = itemLoader.loadURL()
+  item = APVodItem.APVodItem(jsonItemDictionary["vod_item"])
 
 rand1 = int((random.random() * 8999) + 1000)
 rand2 = int((random.random() * 89) + 10)
 deviceId = '1d' + str(rand1) + 'd3b4f71c' + str(rand2)
 PROPERTIES['deviceId'] = deviceId
 
-getCategory("550")
-print '==================================='
-getCategory("550")
+getItem("442181")
 
