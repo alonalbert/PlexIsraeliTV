@@ -8,6 +8,7 @@ import APItemLoader
 import APEpgLoader
 import APVodItem
 import APCategory
+import Provider
 
 VIDEO_PREFIX = "/video/israelitv"
 NAME = "Israeli TV Plugin"
@@ -15,8 +16,36 @@ ART = 'art-default.jpg'
 ICON = 'icon-default.png'
 
 PROVIDERS = {
-  "Mako": {'pKey': '81d42db7c211bf9615a895c504', 'accountId': '39', 'broadcasterId': '24', 'bundle': 'com.keshet.mako.VODandroid'},
-  "Ten": {'pKey':'b52501f01699218ca6f6df33c1', 'accountId': '69', 'broadcasterId':'67', 'bundle':'com.applicaster.il.tenandroid'}
+  "Mako": Provider.Provider(
+      "Mako",
+      R("icon-mako.png"),
+      R("art-mako.jpg"),
+      {
+        'pKey': '81d42db7c211bf9615a895c504',
+        'accountId': '39',
+        'broadcasterId': '24',
+        'bundle': 'com.keshet.mako.VODandroid'
+      }),
+  "Reshet": Provider.Provider(
+      "Reshet",
+      R("icon-reshet.png"),
+      R("art-reshet.jpg"),
+      {
+        'pKey':'a25129723d425516a51fe2910c',
+        'accountId': '32',
+        'broadcasterId':'1',
+        'bundle':'com.applicaster.iReshetandroid'
+      }),
+  "Ten": Provider.Provider(
+      "Ten",
+      R("icon-nana.png"),
+      R("art-nana.jpg"),
+      {
+        'pKey':'b52501f01699218ca6f6df33c1',
+        'accountId': '69',
+        'broadcasterId':'67',
+        'bundle':'com.applicaster.il.tenandroid'
+      }),
 }
 
 def Start():
@@ -32,39 +61,58 @@ def Start():
   rand2 = int((random.random() * 89) + 10)
   deviceId = '1d' + str(rand1) + 'd3b4f71c' + str(rand2)
 
-  for (provider, properties) in PROVIDERS.items():
-    properties['deviceId'] = deviceId
-
+  for (providerName, provider) in PROVIDERS.items():
+    provider.properties['deviceId'] = deviceId
 
 def listProviders():
   oc = ObjectContainer(title1="Israeli TV")
 
-  for (provider, properties) in PROVIDERS.items():
-    rootId = getRootId(properties)
+  for (providerName, provider) in PROVIDERS.items():
+    rootId = getRootId(provider.properties)
     oc.add(DirectoryObject(
-      key=Callback(listDirectories, provider=provider, categoryId=rootId, title=provider),
-      title=provider
+      key=Callback(
+        listDirectories,
+        providerName=providerName,
+        categoryId=rootId,
+        title=providerName,
+        icon=provider.icon,
+        art=provider.art),
+      title=providerName,
+      thumb=provider.icon,
+      art=provider.art
     ))
   return oc
 
 @route(VIDEO_PREFIX + '/listDirectories')
-def listDirectories(provider, categoryId, title):
+def listDirectories(providerName, categoryId, title, icon, art):
   title=unicode(title)
-
-  categories = loadCategories(provider, categoryId)
-  oc = ObjectContainer(title1=title)
+  categories = loadCategories(providerName, categoryId)
+  oc = ObjectContainer(title1=title, art=art)
   for category in categories.getSubCategories():
     categoryTitle = category.getTitle()
-    Log("categoryTitle: " + categoryTitle)
+    thumbnail = category.getThumbnail()
+
+    Log("%s: %s" % (categoryTitle, thumbnail))
+    if thumbnail is None or thumbnail == "":
+      Log("%s: %s" % (categoryTitle, thumbnail))
+      thumbnail = icon
+
     oc.add(DirectoryObject(
-      key=Callback(listDirectories, provider=provider, categoryId=category.getId(), title=categoryTitle),
+      key=Callback(
+        listDirectories,
+        providerName=providerName,
+        categoryId=category.getId(),
+        title=categoryTitle,
+        icon=thumbnail,
+        art=thumbnail),
       title=categoryTitle,
       summary=category.getDescription(),
-      thumb=category.getThumbnail()))
+      art=thumbnail,
+      thumb=thumbnail))
 
   for item in categories.getVodItems():
     oc.add(VideoClipObject(
-      key=Callback(getClip, provider=provider, itemId=item.getId()),
+      key=Callback(getClip, providerName=providerName, itemId=item.getId()),
       rating_key=item.getId(),
       title=item.getTitle(),
       thumb=item.getThumbnail()))
@@ -73,8 +121,8 @@ def listDirectories(provider, categoryId, title):
 
 
 @route(VIDEO_PREFIX + '/getClip')
-def getClip(provider, itemId):
-  itemLoader = APItemLoader.APItemLoader(PROVIDERS[provider], itemId)
+def getClip(providerName, itemId):
+  itemLoader = APItemLoader.APItemLoader(PROVIDERS[providerName].properties, itemId)
   Log('ItemURL --> %s' % (itemLoader.getQuery()))
   jsonObject = itemLoader.loadURL()
 
@@ -85,7 +133,7 @@ def getClip(provider, itemId):
   streamUrl = item.getStreamUrl()
   Log("streamUrl: %s" % (streamUrl))
   clip = VideoClipObject(
-    key=Callback(getClip, provider=provider, itemId=itemId),
+    key=Callback(getClip, providerName=providerName, itemId=itemId),
     rating_key=itemId,
     title=item.getTitle(),
     thumb=item.getThumbnail(),
@@ -109,8 +157,8 @@ def getRootId(properties):
     rootId = broadcaster.getRootCategory()
     return rootId
 
-def loadCategories(provider, categoryId):
-  categoryLoader = APCategoryLoader.APCategoryLoader(PROVIDERS[provider], categoryId)
+def loadCategories(providerName, categoryId):
+  categoryLoader = APCategoryLoader.APCategoryLoader(PROVIDERS[providerName].properties, categoryId)
   jsonCategoryDictionary = categoryLoader.loadURL()
   return APCategoryList.APCategoryList(jsonCategoryDictionary["category"])
 
