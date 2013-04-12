@@ -3,7 +3,7 @@
 <plist version="1.0">
     <dict>
         <key>CFBundleIdentifier</key>
-        <string>com.plexapp.plugins.mako</string>
+        <string>com.plexapp.plugins.israelitv</string>
         <key>PlexClientPlatforms</key>
         <string>*</string>
         <key>PlexFrameworkVersion</key>
