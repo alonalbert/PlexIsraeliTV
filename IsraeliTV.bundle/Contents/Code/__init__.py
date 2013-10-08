@@ -141,7 +141,7 @@ def getClip(providerName, itemId):
     items=[
       MediaObject(
         parts=[
-          PartObject(key=streamUrl)
+          PartObject(key = HTTPLiveStreamURL(Callback(PlayVideo, url=streamUrl)))
         ],
       )
     ])
@@ -168,3 +168,31 @@ def loadCategory(categoryId):
   jsonCategoryDictionary = categoryLoader.loadURL()
   return APCategory.APCategory(jsonCategoryDictionary["category"])
 
+def PlayVideo(url):
+  Log.Debug("service PlayVideo: " + url)
+  playlist = HTTP.Request(url, follow_redirects=False).content
+
+  playlist_base = ""
+
+  if url.find("m3u8") > -1: # direct stream, needs base
+    index = url.rfind("/")
+    playlist_base = url[0:index+1]
+
+  return GeneratePlaylist(playlist, playlist_base)
+
+def GeneratePlaylist(playlist, playlist_base):
+
+  Log.Debug("base: " + playlist_base)
+
+  new_playlist = '#EXTM3U'
+  for line in playlist.splitlines()[1:-2]:
+    if line.startswith('#'):
+      # take it as is
+      Log.Debug("line: " + line)
+      new_playlist = new_playlist + "\n" + line
+    else:
+      line = playlist_base + line
+      Log.Debug("line: " + line)
+      new_playlist = new_playlist + "\n" + line
+
+  return new_playlist
