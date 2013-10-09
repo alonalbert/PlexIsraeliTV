@@ -121,10 +121,7 @@ def listDirectories(providerName, categoryId, title, icon, art):
       rating_key=item.getId(),
       title=item.getTitle(),
       thumb=item.getThumbnail()))
-    break
-
   return oc
-
 
 @route(VIDEO_PREFIX + '/getClip')
 def getClip(providerName, itemId):
