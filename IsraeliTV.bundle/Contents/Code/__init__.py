@@ -140,6 +140,7 @@ def getClip(providerName, itemId):
     summary=item.getDescription(),
     items=[
       MediaObject(
+        optimized_for_streaming=True,
         parts=[
           PartObject(key = HTTPLiveStreamURL(Callback(PlayVideo, url=streamUrl)))
         ],
