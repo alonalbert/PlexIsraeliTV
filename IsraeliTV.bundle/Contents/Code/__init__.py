@@ -169,31 +169,36 @@ def loadCategory(categoryId):
   jsonCategoryDictionary = categoryLoader.loadURL()
   return APCategory.APCategory(jsonCategoryDictionary["category"])
 
+@indirect
 def PlayVideo(url):
-  Log.Debug("service PlayVideo: " + url)
-  playlist = HTTP.Request(url, follow_redirects=False).content
+  Log.Debug("PlayVideo: " + url)
+  request = HTTP.Request(url, follow_redirects=False)
 
-  playlist_base = ""
-
+  base = ""
   if url.find("m3u8") > -1: # direct stream, needs base
     index = url.rfind("/")
-    playlist_base = url[0:index+1]
+    base = url[0:index+1]
 
-  return GeneratePlaylist(playlist, playlist_base)
+  playlist = GeneratePlaylist(request.content, base)
+  cookie = request.headers['set-cookie']
 
-def GeneratePlaylist(playlist, playlist_base):
+  Log.Debug("Playlist:\n" + playlist)
+  Log.Debug("Cookies:\n" + cookie)
 
-  Log.Debug("base: " + playlist_base)
+  return IndirectResponse(
+      VideoClipObject,
+      key = HTTPLiveStreamURL(url),
+      http_cookies = cookie
+	)
 
-  new_playlist = '#EXTM3U'
+def GeneratePlaylist(playlist, base):
+  newPlaylist = '#EXTM3U'
   for line in playlist.splitlines()[1:-2]:
     if line.startswith('#'):
       # take it as is
-      Log.Debug("line: " + line)
-      new_playlist = new_playlist + "\n" + line
+      newPlaylist = newPlaylist + "\n" + line
     else:
-      line = playlist_base + line
-      Log.Debug("line: " + line)
-      new_playlist = new_playlist + "\n" + line
+      line = base + line
+      newPlaylist = newPlaylist + "\n" + line
 
-  return new_playlist
+  return newPlaylist
