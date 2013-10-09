@@ -111,11 +111,17 @@ def listDirectories(providerName, categoryId, title, icon, art):
       thumb=thumbnail))
 
   for item in categories.getVodItems():
+    itemLoader = APItemLoader.APItemLoader(PROVIDERS[providerName].properties, item.getId())
+    jsonObject = itemLoader.loadURL()
+    item = APVodItem.APVodItem(jsonObject["vod_item"])
+    streamUrl = item.getStreamUrl()
+    Log("streamUrl: %s" % (streamUrl))
     oc.add(VideoClipObject(
-      key=Callback(getClip, providerName=providerName, itemId=item.getId()),
+      url=streamUrl,
       rating_key=item.getId(),
       title=item.getTitle(),
       thumb=item.getThumbnail()))
+    break
 
   return oc
 
