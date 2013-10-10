@@ -1,12 +1,8 @@
-METADATA_URL = 'http://www.nbc.com/assets/esp/mobile/PortalFeedV0140/portalGetFullVideoDetail/.json?video_id=%s'
-VIDEO_URL = 'https://secure.services.nbc.nbcuni.com/mobile/PortalFeedV0140/portalGetVideoURL/.json?videoId=%s'
-THUMB_URL = 'http://video.nbc.com/player/mezzanine/image.php?w=640&h=360&trusted=yes&path=%s'
-
 HTTP_HEADERS = {
     'User-Agent': 'Appcelerator Titanium/1.8.3.07172012 (iPad/6.1.3; iPhone OS; en_US;)'
 }
 
-RE_VIDEO_ID = Regex('(nbc|latenightwithjimmyfallon|jaylenosgarage).com/((?!Vintage_Shows).+/)?video/.+?/(?P<id>n\d{4,})')
+RE_RES = Regex('^[0-9]+x([0-9]+)-.*')
 
 AudioStreamObject.language_code = Locale.Language.English
 
@@ -17,24 +13,51 @@ def NormalizeURL(url):
 
 ####################################################################################################
 def MetadataObjectForURL(url):
+    json = JSON.ObjectFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR,)
+    vodItem = json["vod_item"]
+
+    imagesJson = vodItem["images_json"]
+    images = JSON.ObjectFromString(imagesJson)
+    if images is not None:
+        thumbnail = images.get("large_thumb")
+        if thumbnail is None:
+           thumbnail = images.get("large_thumbnail")
 
     return VideoClipObject(
-        title = "title",
-        summary = "summary",
+        title = vodItem["title"],
+        summary = vodItem["summary"],
 #        duration = duration,
-#        thumb = Resource.ContentsOfURLWithFallback(thumb),
+        thumb = Resource.ContentsOfURLWithFallback(thumbnail),
     )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
+    json = JSON.ObjectFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+    vodItem = json["vod_item"]
+    streamUrl = vodItem["stream_url"]
+    playlist = HTTP.Request(streamUrl, cacheTime=CACHE_1HOUR).content
+    Log("MediaObjectsForURL: playList=%s" % (playlist))
+
+    maxRes = 0
+    for line in playlist.splitlines()[1:-2]:
+        if line.startswith('#'):
+            continue
+        res = int(RE_RES.search(line).groups()[0])
+        Log("MediaObjectsForURL: line=%s, res=%d" % (line, res))
+        if res > maxRes:
+            maxRes = res
+
+    if maxRes == 0:
+        maxRes=720
+
     return [
         MediaObject(
             parts = [
                 PartObject(
-                    key=HTTPLiveStreamURL(Callback(PlayVideo, url=url))
+                    key=HTTPLiveStreamURL(Callback(PlayVideo, url=streamUrl))
                 )
             ],
-            video_resolution = '480',
+            video_resolution = str(maxRes),
 #            aspect_ratio = '1.33',
             audio_channels = 2,
             optimized_for_streaming = True
@@ -45,7 +68,7 @@ def MediaObjectsForURL(url):
 @indirect
 def PlayVideo(url):
     Log("PlayVideo: URL=%s" % (url))
-    playlist = HTTP.Request(url)
+    playlist = HTTP.Request(url, cacheTime=CACHE_1HOUR)
     cookie = playlist.headers['set-cookie']
     Log("PlayVideo: Cookie=%s" % (cookie))
 

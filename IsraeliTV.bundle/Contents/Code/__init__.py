@@ -112,45 +112,12 @@ def listDirectories(providerName, categoryId, title, icon, art):
 
   for item in categories.getVodItems():
     itemLoader = APItemLoader.APItemLoader(PROVIDERS[providerName].properties, item.getId())
-    jsonObject = itemLoader.loadURL()
-    item = APVodItem.APVodItem(jsonObject["vod_item"])
-    streamUrl = item.getStreamUrl()
-    Log("streamUrl: %s" % (streamUrl))
     oc.add(VideoClipObject(
-      url=streamUrl,
+      url=itemLoader.getQuery(),
       rating_key=item.getId(),
       title=item.getTitle(),
       thumb=item.getThumbnail()))
   return oc
-
-@route(VIDEO_PREFIX + '/getClip')
-def getClip(providerName, itemId):
-  itemLoader = APItemLoader.APItemLoader(PROVIDERS[providerName].properties, itemId)
-  Log('ItemURL --> %s' % (itemLoader.getQuery()))
-  jsonObject = itemLoader.loadURL()
-
-#  Log(params.dumps(jsonObject, indent=2))
-
-  item = APVodItem.APVodItem(jsonObject["vod_item"])
-
-  streamUrl = item.getStreamUrl()
-  Log("streamUrl: %s" % (streamUrl))
-  clip = VideoClipObject(
-    key=Callback(getClip, providerName=providerName, itemId=itemId),
-    rating_key=itemId,
-    title=item.getTitle(),
-    thumb=item.getThumbnail(),
-    summary=item.getDescription(),
-    items=[
-      MediaObject(
-        optimized_for_streaming=True,
-        parts=[
-          PartObject(key = HTTPLiveStreamURL(Callback(PlayVideo, url=streamUrl)))
-        ],
-      )
-    ])
-
-  return ObjectContainer(objects=[clip], title2="Hello")
 
 def getRootId(properties):
     accountLoader = APAccountLoader.APAccountLoader(properties)

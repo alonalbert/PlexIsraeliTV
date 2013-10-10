@@ -11,20 +11,5 @@
         <key>PlexFrameworkVersion</key>
         <string>2</string>
 
-        <key>PlexURLServices</key>
-        <dict>
-           <key>IsraeliTV</key>
-           <dict>
-              <key>Identifier</key>
-              <string>com.plexapp.plugins.israelitv</string>
-              <key>URLPattern</key>
-              <string>http://.*keshet.pmd.applicaster.com.*</string>
-              <key>TestURLs</key>
-              <array>
-                 <string>http://233493keshet.pmd.applicaster.com/accounts/39/broadcasters/24/vod_items/846477/7f9f4e2fe8e4593f3e00/prog_index_ipad.m3u8?hdnea=exp=1381368408~acl=%2F%2A~hmac=ab6904cd989071352313300c18ae8bb7de55bc6b7b748e24adb605b1a1ef97ca</string>
-              </array>
-           </dict>
-        </dict>
-
     </dict>
 </plist>
