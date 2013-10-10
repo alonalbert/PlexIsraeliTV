@@ -1,38 +1,31 @@
-HTTP_HEADERS = {
-    'User-Agent': 'Appcelerator Titanium/1.8.3.07172012 (iPad/6.1.3; iPhone OS; en_US;)'
-}
-
 RE_RES = Regex('^[0-9]+x([0-9]+)-.*')
-
-AudioStreamObject.language_code = Locale.Language.English
 
 ####################################################################################################
 def NormalizeURL(url):
-
     return url
 
 ####################################################################################################
 def MetadataObjectForURL(url):
-    json = JSON.ObjectFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR,)
+    json = JSON.ObjectFromURL(url, cacheTime=CACHE_1HOUR, )
     vodItem = json["vod_item"]
 
     imagesJson = vodItem["images_json"]
     images = JSON.ObjectFromString(imagesJson)
+    thumbnail = None
     if images is not None:
         thumbnail = images.get("large_thumb")
         if thumbnail is None:
-           thumbnail = images.get("large_thumbnail")
+            thumbnail = images.get("large_thumbnail")
 
     return VideoClipObject(
-        title = vodItem["title"],
-        summary = vodItem["summary"],
-#        duration = duration,
-        thumb = Resource.ContentsOfURLWithFallback(thumbnail),
+        title=vodItem["title"],
+        summary=vodItem["summary"],
+        thumb=Resource.ContentsOfURLWithFallback(thumbnail),
     )
 
 ####################################################################################################
 def MediaObjectsForURL(url):
-    json = JSON.ObjectFromURL(url, headers=HTTP_HEADERS, cacheTime=CACHE_1HOUR)
+    json = JSON.ObjectFromURL(url, cacheTime=CACHE_1HOUR)
     vodItem = json["vod_item"]
     streamUrl = vodItem["stream_url"]
     playlist = HTTP.Request(streamUrl, cacheTime=CACHE_1HOUR).content
@@ -42,25 +35,27 @@ def MediaObjectsForURL(url):
     for line in playlist.splitlines()[1:-2]:
         if line.startswith('#'):
             continue
-        res = int(RE_RES.search(line).groups()[0])
+        match = RE_RES.search(line)
+        if match == None:
+            continue
+        res = int(match.groups()[0])
         Log("MediaObjectsForURL: line=%s, res=%d" % (line, res))
         if res > maxRes:
             maxRes = res
 
     if maxRes == 0:
-        maxRes=720
+        maxRes = 720
 
     return [
         MediaObject(
-            parts = [
+            parts=[
                 PartObject(
                     key=HTTPLiveStreamURL(Callback(PlayVideo, url=streamUrl))
                 )
             ],
-            video_resolution = str(maxRes),
-#            aspect_ratio = '1.33',
-            audio_channels = 2,
-            optimized_for_streaming = True
+            video_resolution=str(maxRes),
+            audio_channels=2,
+            optimized_for_streaming=True
         )
     ]
 
@@ -70,32 +65,7 @@ def PlayVideo(url):
     Log("PlayVideo: URL=%s" % (url))
     playlist = HTTP.Request(url, cacheTime=CACHE_1HOUR)
     cookie = playlist.headers['set-cookie']
-    Log("PlayVideo: Cookie=%s" % (cookie))
-
     return IndirectResponse(VideoClipObject,
-        key = HTTPLiveStreamURL(url),
-        http_cookies = cookie
+                            key=HTTPLiveStreamURL(url),
+                            http_cookies=cookie
     )
-
-####################################################################################################
-def TestURLs():
-
-    test_urls = []
-    page = HTML.ElementFromURL('http://www.nbc.com/video/library/')
-
-    # Full episodes
-    result = page.xpath('//div[@id="header-full-eps"]//li/a/@href')[0:2]
-    for url in result:
-        if not url.startswith('http://'):
-            url = 'http://www.nbc.com%s' % url
-        test_urls.append(url)
-
-    # Video clips
-    result = page.xpath('//div[@id="header-video-clips"]//li/a/@href')[0:2]
-    for url in result:
-        if not url.startswith('http://'):
-            url = 'http://www.nbc.com%s' % url
-
-        test_urls.append(url)
-
-    return test_urls

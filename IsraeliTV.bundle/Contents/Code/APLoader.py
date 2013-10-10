@@ -21,20 +21,20 @@ class APLoader(object):
     osVersionValue = '17' # OSUtil.getAPIVersion()
     deviceModelValue = 'GT-P1000' # Hey I'm a galaxy tab device
     pKey = '' # privateKey from the properties
-    
+
     queryUrl = ''
     URL = 'http://admin.applicaster.com/'
     broadcasterId = ''
     accountId = ''
     deviceIdValue = ''
-    
+
     def __init__(self, settings):
         self.bundleValue = settings['bundle']
-        self.pKey = settings['pKey'] #.getSetting("pKey")
-        self.broadcasterId = settings['broadcasterId'] # .getSetting('broadcasterId')
-        self.accountId = settings['accountId'] # .getSetting('accountId')
+        self.pKey = settings['pKey']
+        self.broadcasterId = settings['broadcasterId']
+        self.accountId = settings['accountId']
         self.deviceIdValue = settings['deviceId']
-        
+
     def MD5 (self, param):
         localMessageDigest = hashlib.md5()
         localMessageDigest.update(param)
@@ -45,7 +45,7 @@ class APLoader(object):
         val = self.prepareUrlParams(self.signRequestParams(paramString, paramMap), True)
         localStringBuffer = localStringBuffer + '?' + val
         return localStringBuffer
-    
+
     def signRequestParams(self, paramString, paramMap):
         localParamMap = {}
         if paramMap != None:
@@ -58,15 +58,15 @@ class APLoader(object):
         localParamMap[self.prepareAPIKey("os_type")] = "android"
         localParamMap[self.prepareAPIKey("os_version")] = self.osVersionValue
         localParamMap[self.prepareAPIKey("timestamp")] = str(now)
-        
+
         localParamMap[self.prepareAPIKey("udid")] = self.deviceIdValue
         localParamMap[self.prepareAPIKey("ver")] = "1.2"
-        
+
         localStringBuilder = self.pKey + paramString + self.prepareUrlParams(localParamMap, False) + self.pKey
         signedValue = self.MD5(localStringBuilder)
         localParamMap[self.prepareAPIKey("sig")] = signedValue
         return localParamMap
-        
+
     def prepareAPIKey(self, key):
         return "api[" + key + "]";
 
@@ -85,17 +85,10 @@ class APLoader(object):
                 localStringBuffer = localStringBuffer + key + '=' + value
                 i+=1
         return localStringBuffer
-    
+
     def loadURL(self):
-        try:
-            req = urllib2.Request(self.queryUrl)
-            response = urllib2.urlopen(req)
-            jsonData = response.read()
-            response.close()
-            datadict = json.loads(jsonData, 'utf-8')
-            return datadict
-        except:
-            return None
-        
+        Log("APLoader.loadURL: " + self.queryUrl)
+        return JSON.ObjectFromURL(self.queryUrl, cacheTime=CACHE_1HOUR)
+
     def getQuery(self):
         return self.queryUrl

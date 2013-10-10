@@ -92,9 +92,7 @@ def listDirectories(providerName, categoryId, title, icon, art):
     categoryTitle = category.getTitle()
     thumbnail = category.getThumbnail()
 
-    Log("%s: %s" % (categoryTitle, thumbnail))
     if thumbnail is None or thumbnail == "":
-      Log("%s: %s" % (categoryTitle, thumbnail))
       thumbnail = icon
 
     oc.add(DirectoryObject(
